@@ -142,7 +142,7 @@ https://github.com/libp2p/rust-libp2p
 - Designed to have as few overhead as possible.
 - Designed to give you total control over the behaviour of the server if you need to.
 - Compiles to asm.js and WebAssembly and can successfully run in a browser<sup>(1)</sup>.
-- API still a work-in-progress. As rust-libp2p gets used in practive, we discover shortcomings in
+- API still a work-in-progress. As rust-libp2p gets used in practice, we discover shortcomings in
   the API and make tweaks.
 
 (1): Except for the cryptographic libraries issue which prevent us from using secio.
@@ -243,7 +243,7 @@ let base_transport = TcpConfig::new(core.handle())
         SecioConfig { key }
     })
 
-    .with_upgrade(MultiplexConfig::new())
+    .with_upgrade(YamuxConfig::new())
     .into_connection_reuse();
 ```
 
@@ -256,8 +256,11 @@ a multiaddress which we received a connection from before, the same connection w
 
 ## Step 4: example how to create a custom protocol
 
-We can easily create an upgrade by creating a `SimpleProtocol`. The `SimpleProtocol` object
-implements the `ConnectionUpgrade` trait.
+The primary way to create a custom protocol is to create a "config" struct (eg. if the protocol is
+named `Foo`, that would be `FooConfig`) and implement the `ConnectionUpgrade` trait on it.
+
+For easier testing, we can create an upgrade by creating a `SimpleProtocol` instead.
+The `SimpleProtocol` object implements the `ConnectionUpgrade` trait.
 
 ```rust
 let echo_protocol = SimpleProtocol::new("/echo/1.0.0", |socket| {
@@ -267,8 +270,6 @@ let echo_protocol = SimpleProtocol::new("/echo/1.0.0", |socket| {
     Ok(Framed::new(socket, BytesCodec::new()))
 });
 ```
-
-The `base_transport` upgraded with `proto` will negotiate the `/echo/1.0.0` protocol.
 
 ---
 
@@ -291,7 +292,7 @@ let finished = base_transport
 The `finished` variable implements the trait `Future`.
 
 It corresponds to the point in time when we finished dialing the node, negotiated secio,
-mutiplex and `/echo/1.0.0`, and sent `"hello world"`.
+yamux, and `/echo/1.0.0`, and sent `"hello world"`.
 
 Due to the way `tokio` works, we have to run the future to completion like this:
 
@@ -359,7 +360,7 @@ let listening_upgrade = upgrade::or(
 );
 let (swarm_controller, swarm_future) = libp2p::core::swarm(
     listening_upgrade,
-    move |final_upgrade, remote_addr| { ... }
+    move |final_upgrade, remote_addr| { ... }   // Next slide
 );
 
 // We need to pass the transport with upgrade again if we dial
@@ -477,7 +478,7 @@ The peerstore contains the list of all known peers, even ones we're not connecte
 Making queries for random walk peer discover.
 
 ```rust
-Interval::new(Instant::now(), Duration::from_secs(30))
+Interval::new(Instant::now(), Duration::from_secs(300))
     .and_then(move |_| {
         kad_system
             .find_node(build_random_peer_id(), move |peer_id| {
@@ -514,12 +515,18 @@ The other protocols (custom protocols, floodsub, etc.) work with the same princi
   `Stream` that represents the events that happen during the handling of the protocol.
 
 ---
-class: center, middle
 
-# Disclaimer
+# Introduction to using rust-libp2p
 
-This may look complicated to use, but we will try to continue improving the API to
-provide shortcuts.
+## Wrapping it all together
+
+- Build a `Transport` that serves as a "base" layer (with secio and multiplexing).
+- Create `ConnectionUpgrade` implementations for your custom protocols, or use the implementations
+  that already exist (`floodsub`, `ping`, etc.)
+- Merge all your upgrades together and build a `swarm` to handle all the negotiated protocols in
+  a single point.
+- Create a peer store, a `KadSystem`, and handle incoming Kademlia requests.
+- Perform random Kademlia requests to discover nodes, and dial these with your custom protocol.
 
 ---
 class: center, middle
