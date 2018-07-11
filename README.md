@@ -1,6 +1,6 @@
 # Slides for the libp2p workshop at the zkSummit conference
 
-Berlin, March 23rd 2018
+Berlin, July 13th 2018
 
 ## How to read the slides
 
