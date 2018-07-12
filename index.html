@@ -98,7 +98,7 @@ class: center, middle
 
 # The tokio library
 
-- Libp2p-rs uses the *futures* and *tokio* libraries.
+- Rust-libp2p uses the *futures* and *tokio* libraries.
 - https://tokio.rs
 - Tokio is a Rust library for asynchronous events processing based on cooperative multitasking.
 - Under the hood, works similarly to NodeJS, except multithreaded.
@@ -142,8 +142,10 @@ https://github.com/libp2p/rust-libp2p
 - Designed to have as few overhead as possible.
 - Designed to give you total control over the behaviour of the server if you need to.
 - Compiles to asm.js and WebAssembly and can successfully run in a browser<sup>(1)</sup>.
-- API still a work-in-progress. As rust-libp2p gets used in practice, we discover shortcomings in
-  the API and make tweaks.
+- API still a work-in-progress, but many parts are more or less stable.
+- API was designed on a bottom-to-top fashion. Build and give access to the low-level capabilities
+  first, then build the high-level API on top of it. (follow-up of the talk will go into details)
+- As rust-libp2p gets used in practice, we discover shortcomings in the API and make tweaks.
 
 (1): Except for the cryptographic libraries issue which prevent us from using secio.
 
